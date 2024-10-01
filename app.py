@@ -36,24 +36,53 @@ app.layout = html.Div(
             },
 
             children=[
-                # Clustering Analysis Overview
-                html.H2("Clustering Analysis Findings", style={"textAlign": "center", "color": "#1F77B4"}),
 
-                # Cluster overview heatmap
-                dcc.Graph(
-                    figure=px.imshow(
-                        cluster_stat_averages.values,
-                        x=cluster_stat_averages.columns,
-                        y=cluster_stat_averages.index,
-                        color_continuous_scale="algae", 
-                        title="Midfielder Cluster Attribute Overview (Z score normalized)"
-                    ), 
-                    style={"border": "2px solid #ccc", "borderRadius": "10px"}
-                ),
+                html.Div([
+                    # Clustering Analysis Overview
+                    html.H2("Clustering Analysis Findings", style={"textAlign": "center", "color": "#1F77B4"}),
 
-                html.P(
-                    "Note: Z scores indicate how much an attribute from the average across all clusters. Lighter colors indicate below average performance in each attribute, while darker colors indicate the opposite."
-                ),
+                    # Cluster overview heatmap
+                    dcc.Graph(
+                        figure=px.imshow(
+                            cluster_stat_averages.values,
+                            x=cluster_stat_averages.columns,
+                            y=cluster_stat_averages.index,
+                            color_continuous_scale="GnBu", 
+                            title="Midfielder Cluster Attribute Overview (Z score normalized)"
+                        ), 
+                        style={"border": "2px solid #ccc", "borderRadius": "10px"}
+                    ),
+
+                    html.P(
+                        "Note: Z scores indicate how much an attribute from the average across all clusters. Lighter colors indicate below average performance in each attribute, while darker colors indicate the opposite."
+                    ),
+
+                    html.Div([
+                        html.Div([
+                            html.Label("X"),
+                            dcc.Dropdown(
+                                features,
+                                value=features[0],
+                                placeholder="Select X axis attribute...",
+                                style={'width': '150px'},
+                                id='x-axis-dropdown'
+                            ),
+                        ]),
+
+                        html.Div([
+                            html.Label("Y"),
+                            dcc.Dropdown(
+                                features,
+                                value=features[1],
+                                placeholder="Select Y axis attribute...",
+                                style={'width': '150px'},
+                                id='y-axis-dropdown'
+                            ),
+                        ])
+                    ], style={"display":"flex", "padding": "20px"}),
+
+                    dcc.Graph(id='player-scatter', style={"border": "2px solid #ccc", "borderRadius": "10px"}),
+                ]),
 
                 # Midfielder recommendation
                 html.Div(
@@ -193,6 +222,28 @@ def update_player_radar(player1, player2):
 
     return fig
 
+
+
+@callback(
+        Output('player-scatter', 'figure'),
+        [Input('x-axis-dropdown', 'value'), Input('y-axis-dropdown', 'value')]
+)
+def update_scatter(x_axis, y_axis):
+
+    if not x_axis or not y_axis:
+        return go.Figure()
+    
+    fig = px.scatter(
+        player_stats, 
+        x=x_axis, y=y_axis, color="Cluster", hover_data=["Player_Name"],
+        title=f"{x_axis} vs. {y_axis} (per game)")
+    
+    fig.update_layout(
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=False)
+    )
+    
+    return fig
 
 
 @callback(
